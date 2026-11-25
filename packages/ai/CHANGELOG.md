@@ -6,6 +6,7 @@
 
 - Added `compat.supportsStrictMode` to the `google-generative-ai` and `google-vertex` APIs, so Gemini 3+ models served under IDs without the version can use strict tools (`VALIDATED` function calling); unset keeps the model ID detection ([#12321](https://github.com/earendil-works/pi/issues/12321))
 - Added the `pi-decision` API (`POST <baseUrl>/decision`), a common protocol for decision models analogous to `pi-messages`, used by the Radius gateway provider
+- Added the `pi-image` API (`POST <baseUrl>/image`), a common protocol for image models analogous to `pi-messages` and `pi-decision`, with `aspectRatio`, `size`, `outputFormat`, and `n` options on `ImagesOptions` (with `aspectRatio` and `size` forwarded to OpenRouter's `image_config`)
 - Added `responseId` to classifier results. OpenRouter's System One endpoint fills it with its generation ID, and its billed cost now replaces the catalog estimate in `usage.cost.total` (`totalFromProvider: true`), as it does for chat
 - Added the `gpt-6-luna-decisions` decision model for GitHub Copilot, callable from codemode `models.classify()` with text and images ([#12395](https://github.com/earendil-works/pi/issues/12395))
 

@@ -77,7 +77,7 @@ export type KnownApi =
 
 export type Api = KnownApi | (string & {});
 
-export type KnownImageApi = "openrouter-images";
+export type KnownImageApi = "openrouter-images" | "pi-image";
 
 export type ImageApi = KnownImageApi | (string & {});
 
@@ -377,7 +377,17 @@ export interface ClassifierOptions extends ProviderRequestOptions<ClassifierMode
 	temperature?: number;
 }
 
+export type ImageOutputFormat = "png" | "jpeg" | "webp";
+
 export interface ImagesOptions extends ProviderRequestOptions<ImageModel<ImageApi>> {
+	/** Desired aspect ratio, e.g. `"1:1"`, `"16:9"`, `"4:3"`, `"9:16"`. APIs that cannot apply it ignore it. */
+	aspectRatio?: string;
+	/** Desired resolution or dimensions, e.g. `"1K"`, `"2K"`, `"4K"`, or `"1024x1536"`. APIs that cannot apply it ignore it. */
+	size?: string;
+	/** Desired output image format. APIs that cannot apply it ignore it. */
+	outputFormat?: ImageOutputFormat;
+	/** Number of images to generate (positive integer). APIs that only generate one image ignore it. */
+	n?: number;
 	/**
 	 * Optional metadata to include in API requests.
 	 * Providers extract the fields they understand and ignore the rest.
