@@ -11,7 +11,7 @@ import { getClientIdentity } from "./client-identity.ts";
 import { DEFAULT_THINKING_LEVEL } from "./defaults.ts";
 import type { ExtensionRunner, LoadExtensionsResult, SessionStartEvent, ToolDefinition } from "./extensions/index.ts";
 import { createToolNameMatcher } from "./mcp-servers.ts";
-import { convertToLlm } from "./messages.ts";
+import { convertToLlm, samePromptMessage } from "./messages.ts";
 import { findInitialModel } from "./model-resolver.ts";
 import { ModelRuntime } from "./model-runtime.ts";
 import type { ResourceLoader } from "./resource-loader.ts";
@@ -367,7 +367,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 				currentModel.provider === requestModel.provider &&
 				currentModel.id === requestModel.id &&
 				messages.length <= currentMessages.length &&
-				messages.every((message, index) => currentMessages[index] === message)
+				messages.every((message, index) => samePromptMessage(message, currentMessages[index]))
 			);
 		};
 	};
