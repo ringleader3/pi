@@ -147,7 +147,10 @@ describe("createAgentSession stream options", () => {
 		}
 	}
 
-	async function createCacheWarmingSession(populate?: (manager: SessionManager, model: Model<Api>) => void) {
+	async function createCacheWarmingSession(
+		populate?: (manager: SessionManager, model: Model<Api>) => void,
+		extensionFactory?: ExtensionFactory,
+	) {
 		const model: Model<Api> = {
 			...createModel("anthropic-messages"),
 			cost: { input: 10, output: 50, cacheRead: 0.25, cacheWrite: 12.5 },
@@ -166,13 +169,22 @@ describe("createAgentSession stream options", () => {
 		});
 		const sessionManager = SessionManager.inMemory(cwd);
 		populate?.(sessionManager, model);
+		const settingsManager = SettingsManager.inMemory({ cacheWarming: "idle" });
+		const resourceLoader = new DefaultResourceLoader({
+			cwd,
+			agentDir,
+			settingsManager,
+			extensionFactories: extensionFactory ? [extensionFactory] : [],
+		});
+		await resourceLoader.reload();
 		const { session } = await createAgentSession({
 			cwd,
 			agentDir,
 			model,
 			modelRuntime: getModelRuntime(modelRegistry),
-			settingsManager: SettingsManager.inMemory({ cacheWarming: "idle" }),
+			settingsManager,
 			sessionManager,
+			resourceLoader,
 		});
 		return {
 			session,
@@ -196,6 +208,42 @@ describe("createAgentSession stream options", () => {
 			expect(fixture.session.cacheWarmingStatus?.nextWarmAt).toBeGreaterThan(Date.now());
 			fixture.session.agent.state.messages = fixture.session.agent.state.messages.slice(1);
 			expect(fixture.session.cacheWarmingStatus?.reason).toBe("conversation context changed");
+		} finally {
+			fixture.dispose();
+		}
+	});
+
+	// #10956: a turn_end handler makes the session re-project custom and summary
+	// entries into new message objects after every turn, with the same content.
+	it("keeps cache warming when a turn_end handler rebuilds a custom message", async () => {
+		const fixture = await createCacheWarmingSession(undefined, (pi) => {
+			pi.on("turn_end", () => {});
+		});
+		try {
+			await fixture.session.sendCustomMessage({ customType: "note", content: "x", display: true });
+			await fixture.session.prompt("test");
+			expect(fixture.session.cacheWarmingStatus?.reason).toBeUndefined();
+			expect(fixture.session.cacheWarmingStatus?.nextWarmAt).toBeGreaterThan(Date.now());
+		} finally {
+			fixture.dispose();
+		}
+	});
+
+	// #10956: a custom message that starts a turn is stamped again when its entry
+	// is saved, so the re-projected copy differs from the request only in timestamp.
+	it("keeps cache warming after a custom message starts the turn", async () => {
+		const fixture = await createCacheWarmingSession(undefined, (pi) => {
+			pi.on("turn_end", () => {});
+		});
+		try {
+			await fixture.session.sendCustomMessage(
+				{ customType: "note", content: "x", display: true },
+				{ triggerTurn: true },
+			);
+			await fixture.session.waitForIdle();
+			expect(fixture.providerCalls()).toBe(1);
+			expect(fixture.session.cacheWarmingStatus?.reason).toBeUndefined();
+			expect(fixture.session.cacheWarmingStatus?.nextWarmAt).toBeGreaterThan(Date.now());
 		} finally {
 			fixture.dispose();
 		}

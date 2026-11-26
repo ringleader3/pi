@@ -147,6 +147,39 @@ export function createCustomMessage(
 }
 
 /**
+ * Whether two context messages send the same prompt. Session context rebuilds
+ * custom and summary messages from their entries as new objects (and a custom
+ * message that starts a turn gets a later timestamp when saved), so these roles
+ * compare by the fields convertToLlm sends; every other role compares by identity.
+ */
+export function samePromptMessage(a: AgentMessage, b: AgentMessage): boolean {
+	if (a === b) return true;
+	switch (a.role) {
+		case "custom":
+			return b.role === "custom" && sameCustomContent(a.content, b.content);
+		case "branchSummary":
+			return b.role === "branchSummary" && a.summary === b.summary;
+		case "compactionSummary":
+			return b.role === "compactionSummary" && a.summary === b.summary;
+		default:
+			return false;
+	}
+}
+
+function sameCustomContent(a: CustomMessage["content"], b: CustomMessage["content"]): boolean {
+	if (a === b) return true;
+	if (typeof a === "string" || typeof b === "string") return false;
+	return (
+		a.length === b.length &&
+		a.every((block, index) => {
+			const other = b[index];
+			if (block.type === "text") return other.type === "text" && block.text === other.text;
+			return other.type === "image" && block.data === other.data && block.mimeType === other.mimeType;
+		})
+	);
+}
+
+/**
  * Transform AgentMessages (including custom types) to LLM-compatible Messages.
  *
  * This is used by:
