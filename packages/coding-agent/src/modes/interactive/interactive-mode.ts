@@ -3686,6 +3686,25 @@ export class InteractiveMode {
 					);
 					this.ui.requestRender();
 				} else if (event.entry.type === "compaction") {
+					if (this.settingsManager.getTranscriptHistory() === "branch") {
+						this.addMessageToChat(
+							createCompactionSummaryMessage(
+								event.entry.summary,
+								event.entry.tokensBefore,
+								event.entry.timestamp,
+							),
+						);
+						if (event.entry.usage) {
+							this.addCompactionCostNotice({
+								type: "compaction_cost",
+								kind: "compaction",
+								usage: event.entry.usage,
+							});
+						}
+						this.footer.invalidate();
+						this.ui.requestRender();
+						break;
+					}
 					const entries = this.sessionManager.buildContextEntries();
 					if (entries[0]?.id !== event.entry.id) break;
 					this.chatContainer.clear();
@@ -3937,9 +3956,11 @@ export class InteractiveMode {
 					if (entries[0]?.type !== "compaction") {
 						throw new Error("Completed compaction is missing from the session context");
 					}
-					this.chatContainer.clear();
-					// The latest compaction is prepended for model context; append it below at its chronological position.
-					this.renderSessionEntries(entries.slice(1));
+					if (this.settingsManager.getTranscriptHistory() !== "branch") {
+						this.chatContainer.clear();
+						// The latest compaction is prepended for model context; append it below at its chronological position.
+						this.renderSessionEntries(entries.slice(1));
+					}
 					this.addMessageToChat(
 						createCompactionSummaryMessage(
 							event.result.summary,
@@ -4478,7 +4499,7 @@ export class InteractiveMode {
 	}
 
 	renderInitialMessages(): void {
-		const entries = this.sessionManager.buildContextEntries();
+		const entries = this.getTranscriptEntries();
 		this.renderSessionEntries(entries, {
 			updateFooter: true,
 			populateHistory: true,
@@ -4529,9 +4550,16 @@ export class InteractiveMode {
 		});
 	}
 
+	/** Select human-visible history independently of the model's compacted context. */
+	private getTranscriptEntries(): SessionEntry[] {
+		return this.settingsManager.getTranscriptHistory() === "branch"
+			? this.sessionManager.getBranch()
+			: this.sessionManager.buildContextEntries();
+	}
+
 	private rebuildChatFromMessages(): void {
 		this.chatContainer.clear();
-		this.renderSessionEntries(this.sessionManager.buildContextEntries());
+		this.renderSessionEntries(this.getTranscriptEntries());
 	}
 
 	// =========================================================================
@@ -5230,6 +5258,7 @@ export class InteractiveMode {
 					doubleEscapeAction: this.settingsManager.getDoubleEscapeAction(),
 					treeFilterMode: this.settingsManager.getTreeFilterMode(),
 					showHardwareCursor: this.settingsManager.getShowHardwareCursor(),
+					transcriptHistory: this.settingsManager.getTranscriptHistory(),
 					defaultProjectTrust: this.settingsManager.getDefaultProjectTrust(),
 					editorPaddingX: this.settingsManager.getEditorPaddingX(),
 					outputPad: this.settingsManager.getOutputPad(),
@@ -5333,6 +5362,15 @@ export class InteractiveMode {
 						this.settingsManager.setMermaidRenderingMode(mode);
 						this.chatContainer.invalidate();
 						this.ui.requestRender();
+					},
+					onTranscriptHistoryChange: (history) => {
+						if (this.session.isStreaming || this.session.isCompacting || this.session.isBashRunning) {
+							this.showWarning("Change transcript history when the session is idle");
+							this.showSettingsSelector();
+							return;
+						}
+						this.settingsManager.setTranscriptHistory(history);
+						this.rebuildChatFromMessages();
 					},
 					onCollapseChangelogChange: (collapsed) => {
 						this.settingsManager.setCollapseChangelog(collapsed);

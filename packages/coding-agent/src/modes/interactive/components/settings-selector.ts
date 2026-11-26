@@ -83,6 +83,7 @@ export interface SettingsConfig {
 	availableThemes: string[];
 	hideThinkingBlock: boolean;
 	mermaidRenderingMode: MermaidRenderingMode;
+	transcriptHistory: "context" | "branch";
 	collapseChangelog: boolean;
 	enableInstallTelemetry: boolean;
 	doubleEscapeAction: "fork" | "tree" | "none";
@@ -123,6 +124,7 @@ export interface SettingsCallbacks {
 	onThemePreview?: (theme: string) => void;
 	onHideThinkingBlockChange: (hidden: boolean) => void;
 	onMermaidRenderingModeChange: (mode: MermaidRenderingMode) => void;
+	onTranscriptHistoryChange: (history: "context" | "branch") => void;
 	onCollapseChangelogChange: (collapsed: boolean) => void;
 	onEnableInstallTelemetryChange: (enabled: boolean) => void;
 	onDoubleEscapeActionChange: (action: "fork" | "tree" | "none") => void;
@@ -584,6 +586,13 @@ export class SettingsSelectorComponent extends Container {
 				values: ["off", "final", "streaming"],
 			},
 			{
+				id: "transcript-history",
+				label: "Transcript history",
+				description: "Display retained context or full active-branch history; model context is unchanged",
+				currentValue: config.transcriptHistory === "branch" ? "Full branch" : "Retained context",
+				values: ["Retained context", "Full branch"],
+			},
+			{
 				id: "collapse-changelog",
 				label: "Collapse changelog",
 				description: "Show condensed changelog after updates",
@@ -974,6 +983,9 @@ export class SettingsSelectorComponent extends Container {
 						break;
 					case "mermaid-rendering":
 						callbacks.onMermaidRenderingModeChange(newValue as MermaidRenderingMode);
+						break;
+					case "transcript-history":
+						callbacks.onTranscriptHistoryChange(newValue === "Full branch" ? "branch" : "context");
 						break;
 					case "collapse-changelog":
 						callbacks.onCollapseChangelogChange(newValue === "true");

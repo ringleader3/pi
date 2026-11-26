@@ -1001,6 +1001,16 @@ export class SettingsManager {
 		this.save();
 	}
 
+	getTranscriptHistory(): "context" | "branch" {
+		return this.settings.transcriptHistory === "branch" ? "branch" : "context";
+	}
+
+	setTranscriptHistory(history: "context" | "branch"): void {
+		this.globalSettings.transcriptHistory = history;
+		this.markModified("transcriptHistory");
+		this.save();
+	}
+
 	getShellPath(): string | undefined {
 		const shellPath = this.settings.shellPath;
 		return shellPath ? normalizePath(shellPath) : shellPath;

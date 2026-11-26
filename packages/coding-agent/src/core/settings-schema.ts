@@ -275,6 +275,12 @@ export const SettingsSchema = Type.Object(
 		branchSummary: Type.Optional(BranchSummarySettingsSchema),
 		retry: Type.Optional(RetrySettingsSchema),
 		hideThinkingBlock: Type.Optional(Type.Boolean({ default: SETTINGS_DEFAULTS.hideThinkingBlock })),
+		transcriptHistory: Type.Optional(
+			Type.Union([Type.Literal("context"), Type.Literal("branch")], {
+				default: "context",
+				description: "Display retained context or full active-branch history without changing model context.",
+			}),
+		),
 		externalEditor: Type.Optional(
 			Type.String({ description: "Command for Ctrl+G external editor; takes precedence over VISUAL and EDITOR." }),
 		),

@@ -97,6 +97,7 @@ See [Compaction Reference](compaction.md) for trigger, summarization, and valida
 |---|---|---|---|
 | `theme` | string | `"system"` | Built-in or custom theme name. `system` derives colors from the terminal theme. |
 | `quietStartup` | boolean \| `"header"` | `false` | `true` hides the startup header and loaded-resource listing. `"header"` keeps the header (version and key hints) but hides the model scope line and loaded-resource listing. |
+| `transcriptHistory` | `"context" \| "branch"` | `"context"` | Display retained model context or full active-branch history in the interactive transcript. Does not change model context, compaction, session storage, or exports. Full branches can take longer to render. Change via `/settings` while idle. |
 | `tuiMode` | `"regular" \| "fullscreen"` | `"fullscreen"` | Interactive terminal UI mode. |
 | `fullscreenExitOutput` | `"transcript" \| "resume-hint"` | `"transcript"` | Output printed when fullscreen mode exits. |
 | `fullscreenScrollbar` | `"auto" \| "always" \| "hidden"` | `"auto"` | Fullscreen transcript scrollbar behavior. |

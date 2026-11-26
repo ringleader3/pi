@@ -159,7 +159,7 @@ describe("InteractiveMode compaction events", () => {
 			showStatus: vi.fn(),
 			clearStatusIndicator: vi.fn(),
 			flushCompactionQueue: vi.fn().mockResolvedValue(undefined),
-			settingsManager: { getShowTerminalProgress: () => false },
+			settingsManager: { getShowTerminalProgress: () => false, getTranscriptHistory: () => "context" },
 			ui: { requestRender: vi.fn(), terminal: { setProgress: vi.fn() } },
 		};
 
