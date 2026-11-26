@@ -212,6 +212,20 @@
       "type": "boolean",
       "default": false
     },
+    "transcriptHistory": {
+      "anyOf": [
+        {
+          "type": "string",
+          "const": "context"
+        },
+        {
+          "type": "string",
+          "const": "branch"
+        }
+      ],
+      "default": "context",
+      "description": "Display retained context or full active-branch history without changing model context."
+    },
     "externalEditor": {
       "type": "string",
       "description": "Command for Ctrl+G external editor; takes precedence over VISUAL and EDITOR."
